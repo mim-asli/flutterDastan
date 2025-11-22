@@ -15,7 +15,7 @@ extension GetSaveSlotCollection on Isar {
 
 const SaveSlotSchema = CollectionSchema(
   name: r'SaveSlot',
-  id: -5827442136686301910,
+  id: -1,
   properties: {
     r'inventoryItems': PropertySchema(
       id: 0,
@@ -809,7 +809,7 @@ extension SaveSlotQueryProperty
 
 const GameStatsDBSchema = Schema(
   name: r'GameStatsDB',
-  id: 7803378648279329909,
+  id: 2,
   properties: {
     r'energy': PropertySchema(
       id: 0,
@@ -1121,7 +1121,7 @@ extension GameStatsDBQueryObject
 
 const InventoryItemDBSchema = Schema(
   name: r'InventoryItemDB',
-  id: -2897211755137429785,
+  id: -3,
   properties: {
     r'description': PropertySchema(
       id: 0,
