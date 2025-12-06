@@ -2,10 +2,14 @@ import 'dart:developer' as developer;
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 
+/// سرویس تبدیل گفتار به متن (Speech-to-Text).
+///
+/// این کلاس از پکیج `speech_to_text` برای تشخیص صدای کاربر و تبدیل آن به متن استفاده می‌کند.
+/// این قابلیت به کاربر اجازه می‌دهد تا به جای تایپ کردن، با بازی صحبت کند.
 class SttService {
   final SpeechToText _speechToText = SpeechToText();
-  bool _isInitialized = false;
-  bool _isListening = false;
+  bool _isInitialized = false; // آیا سرویس آماده به کار است؟
+  bool _isListening = false; // آیا سرویس در حال گوش دادن است؟
 
   /// آیا سرویس در حال گوش دادن به ورودی صوتی است؟
   /// این مقدار پس از شروع `startListening` برابر `true` و پس از `stopListening` یا پایان تشخیص، `false` می‌شود.
@@ -20,12 +24,17 @@ class SttService {
   /// اگر مقداردهی اولیه موفقیت‌آمیز باشد `true` و در غیر این صورت `false` برمی‌گرداند.
   Future<bool> init() async {
     if (_isInitialized) return true;
-    _isInitialized = await _speechToText.initialize(
-      onStatus: (status) =>
-          developer.log('[STT] وضعیت: $status', name: 'SttService'),
-      onError: (error) =>
-          developer.log('[STT] خطا: $error', name: 'SttService', error: error),
-    );
+    try {
+      _isInitialized = await _speechToText.initialize(
+        onStatus: (status) =>
+            developer.log('[STT] وضعیت: $status', name: 'SttService'),
+        onError: (error) => developer.log('[STT] خطا: $error',
+            name: 'SttService', error: error),
+      );
+    } catch (e) {
+      developer.log('[STT] خطا در مقداردهی اولیه: $e', name: 'SttService');
+      _isInitialized = false;
+    }
     return _isInitialized;
   }
 

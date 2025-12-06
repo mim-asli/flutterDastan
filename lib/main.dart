@@ -6,8 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:myapp/models.dart';
 import 'package:myapp/providers.dart';
+import 'package:myapp/providers/settings_provider.dart';
 import 'package:myapp/screens/settings_screen.dart'; // وارد کردن صفحه تنظیمات
+import 'package:myapp/screens/welcome_screen.dart'; // وارد کردن صفحه خوش‌آمدگویی
 import 'package:myapp/services/tts_service.dart';
+import 'package:myapp/widgets/image_display.dart';
 
 void main() {
   // اطمینان از اینکه Isar قبل از اجرای برنامه آماده شده است
@@ -19,24 +22,52 @@ void main() {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsNotifier = ref.watch(settingsProvider.notifier);
+
+    // تعریف تم روشن
+    final lightTheme = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      textTheme: GoogleFonts.vazirmatnTextTheme(ThemeData.light().textTheme),
+      scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFFDB3838), // Red accent
+        brightness: Brightness.light,
+      ),
+    );
+
+    // تعریف تم تیره
+    final darkTheme = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      textTheme: GoogleFonts.vazirmatnTextTheme(ThemeData.dark().textTheme),
+      scaffoldBackgroundColor: const Color(0xFF1C1C1C), // Nothing Phone Dark
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFFDB3838), // Red accent
+        brightness: Brightness.dark,
+        surface: const Color(0xFF1C1C1C),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF1C1C1C),
+        foregroundColor: Colors.white,
+      ),
+    );
+
     return MaterialApp(
       title: 'بازی داستانی هوش مصنوعی',
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        textTheme: GoogleFonts.vazirmatnTextTheme(Theme.of(context).textTheme),
-        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-      ),
-      home: const MainScreen(),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: settingsNotifier.themeMode == 'dark'
+          ? ThemeMode.dark
+          : settingsNotifier.themeMode == 'light'
+              ? ThemeMode.light
+              : ThemeMode.system,
+      home: const WelcomeScreen(), // شروع از صفحه خوش‌آمدگویی
       debugShowCheckedModeBanner: false,
     );
   }
@@ -63,11 +94,16 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   // لیست آیتم‌های نوار ناوبری، آیتم تنظیمات به آن اضافه شده است
-  static const List<BottomNavigationBarItem> _navBarItems = <BottomNavigationBarItem>[
+  static const List<BottomNavigationBarItem> _navBarItems =
+      <BottomNavigationBarItem>[
     BottomNavigationBarItem(icon: Icon(Icons.gamepad_outlined), label: 'بازی'),
-    BottomNavigationBarItem(icon: Icon(Icons.backpack_outlined), label: 'کوله‌پشتی'),
-    BottomNavigationBarItem(icon: Icon(Icons.save_alt_outlined), label: 'سیستم'),
-    BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'تنظیمات'), // اضافه شدن آیتم تنظیمات
+    BottomNavigationBarItem(
+        icon: Icon(Icons.backpack_outlined), label: 'کوله‌پشتی'),
+    BottomNavigationBarItem(
+        icon: Icon(Icons.save_alt_outlined), label: 'سیستم'),
+    BottomNavigationBarItem(
+        icon: Icon(Icons.settings_outlined),
+        label: 'تنظیمات'), // اضافه شدن آیتم تنظیمات
   ];
 
   @override
@@ -84,12 +120,11 @@ class _MainScreenState extends State<MainScreen> {
             duration: 300.ms, curve: Curves.easeInOut),
         items: _navBarItems,
         // نوع ناوبری برای زمانی که تعداد آیتم‌ها زیاد است
-        type: BottomNavigationBarType.fixed, 
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
 }
-
 
 // ------------------- صفحه ذخیره و بارگذاری (SaveLoadScreen) -------------------
 class SaveLoadScreen extends ConsumerWidget {
@@ -157,7 +192,7 @@ class SaveLoadScreen extends ConsumerWidget {
                                       onConfirm: () async {
                                     await ref
                                         .read(gameControllerProvider.notifier)
-                                        .deleteGame(slot.id);
+                                        .deleteGame(slot.id!);
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
@@ -189,7 +224,7 @@ class SaveLoadScreen extends ConsumerWidget {
                             onConfirm: () async {
                           await ref
                               .read(gameControllerProvider.notifier)
-                              .loadGame(slot.id);
+                              .loadGame(slot.id!);
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -301,6 +336,7 @@ class GameScreen extends ConsumerWidget {
           children: [
             PlayerStatus(stats: stats),
             const SizedBox(height: 24),
+            const ImageDisplay(),
             StoryDisplay(storyText: storyLog.last),
             const SizedBox(height: 24),
             OptionsDisplay(isLoading: isLoading, options: options),
@@ -381,7 +417,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         },
                         child: Card(
                           color: isSelected
-                              ? Colors.deepPurple.shade300
+                              ? const Color(0xFFDB3838) // Red accent
                               : const Color(0xFF2C2C2C),
                           child: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -449,7 +485,7 @@ class StoryDisplay extends ConsumerWidget {
         decoration: BoxDecoration(
             color: Colors.black.withAlpha(77),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.deepPurple.withAlpha(100))),
+            border: Border.all(color: const Color(0xFFDB3838).withAlpha(100))),
         child: Stack(
           children: [
             SingleChildScrollView(
@@ -579,7 +615,7 @@ class _OptionsDisplayState extends ConsumerState<OptionsDisplay> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.deepPurple.shade400,
+                  backgroundColor: const Color(0xFFDB3838), // Red accent
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10))),
@@ -634,7 +670,7 @@ class PlayerStatus extends StatelessWidget {
             StatusIndicator(
                 icon: Icons.psychology,
                 value: stats.sanity,
-                color: Colors.blue.shade400,
+                color: Colors.purpleAccent, // Changed from Blue to Purple
                 label: 'روان'),
             StatusIndicator(
                 icon: Icons.fastfood,

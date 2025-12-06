@@ -1,59 +1,86 @@
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:myapp/collections.dart';
 
+/// سرویس مدیریت دیتابیس با استفاده از Hive.
+///
+/// این کلاس مسئول تمام عملیات ذخیره، بازیابی، به‌روزرسانی و حذف داده‌های بازی است.
+/// از Hive استفاده می‌کند که یک دیتابیس NoSQL سریع و سبک است و با وب سازگاری کامل دارد.
 class DBService {
-  late Future<Isar> db;
+  late Future<Box<SaveSlot>> _boxFuture;
 
   DBService() {
-    db = _initDB();
+    _boxFuture = _initDB();
   }
 
-  Future<Isar> _initDB() async {
-    if (Isar.instanceNames.isEmpty) {
-      final dir = await getApplicationDocumentsDirectory();
-      return await Isar.open(
-        [SaveSlotSchema], // Schemaهای ما در اینجا قرار می‌گیرند
-        directory: dir.path,
-        inspector: true, // برای دیباگ کردن دیتابیس در مرورگر
-      );
+  /// مقداردهی اولیه دیتابیس Hive و ثبت آداپتورها.
+  Future<Box<SaveSlot>> _initDB() async {
+    // راه‌اندازی Hive برای فلاتر
+    await Hive.initFlutter();
+
+    // ثبت آداپتورهای مدل‌های داده‌ای برای اینکه Hive بداند چطور آن‌ها را ذخیره کند.
+    // بررسی می‌کنیم که آداپتور قبلاً ثبت نشده باشد تا از خطا جلوگیری کنیم.
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(SaveSlotAdapter());
     }
-    return Future.value(Isar.getInstance());
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(GameStatsDBAdapter());
+    }
+    if (!Hive.isAdapterRegistered(2)) {
+      Hive.registerAdapter(InventoryItemDBAdapter());
+    }
+
+    // باز کردن جعبه (Box) مربوط به اسلات‌های ذخیره.
+    // در Hive، داده‌ها در Box ذخیره می‌شوند که شبیه به جدول در SQL است.
+    return await Hive.openBox<SaveSlot>('save_slots');
   }
 
-  /// یک اسلات ذخیره جدید ایجاد می‌کند یا یک اسلات موجود را آپدیت می‌کند
+  /// یک اسلات ذخیره جدید ایجاد می‌کند یا یک اسلات موجود را آپدیت می‌کند.
+  ///
+  /// [slot]: آبجکت اسلات ذخیره که باید ذخیره شود.
   Future<void> saveGame(SaveSlot slot) async {
-    final isar = await db;
-    await isar.writeTxn(() async {
-      await isar.saveSlots.put(slot);
-    });
+    final box = await _boxFuture;
+
+    if (slot.isInBox) {
+      // اگر اسلات قبلاً در باکس باشد (یعنی قبلاً ذخیره شده)، فقط تغییرات را ذخیره می‌کنیم.
+      await slot.save();
+    } else if (slot.id != null) {
+      // اگر اسلات ID دارد اما در باکس نیست (مثلاً دستی ساخته شده با ID مشخص)،
+      // آن را با همان ID در باکس قرار می‌دهیم (آپدیت یا درج با ID خاص).
+      await box.put(slot.id, slot);
+    } else {
+      // اگر اسلات جدید است و ID ندارد، آن را به باکس اضافه می‌کنیم.
+      // Hive خودکار یک ID یکتا تولید می‌کند.
+      final key = await box.add(slot);
+      slot.id = key; // ID تولید شده را به اسلات اختصاص می‌دهیم
+      await slot.save(); // دوباره ذخیره می‌کنیم تا ID هم ذخیره شود
+    }
   }
 
-  /// یک اسلات ذخیره را با استفاده از ID آن بارگذاری می‌کند
+  /// یک اسلات ذخیره را با استفاده از ID آن بارگذاری می‌کند.
   Future<SaveSlot?> loadGame(int id) async {
-    final isar = await db;
-    return await isar.saveSlots.get(id);
+    final box = await _boxFuture;
+    return box.get(id);
   }
 
-  /// تمام اسلات‌های ذخیره شده را برمی‌گرداند (مرتب شده بر اساس جدیدترین)
+  /// تمام اسلات‌های ذخیره شده را برمی‌گرداند.
+  /// لیست خروجی بر اساس تاریخ ذخیره (از جدید به قدیم) مرتب می‌شود.
   Future<List<SaveSlot>> getAllSaveSlots() async {
-    final isar = await db;
-    return await isar.saveSlots.where().sortBySaveDateDesc().findAll();
+    final box = await _boxFuture;
+    final slots = box.values.toList();
+    // مرتب‌سازی بر اساس تاریخ ذخیره (نزولی)
+    slots.sort((a, b) => b.saveDate.compareTo(a.saveDate));
+    return slots;
   }
 
-  /// یک اسلات ذخیره را با ID آن حذف می‌کند
+  /// یک اسلات ذخیره را با ID آن حذف می‌کند.
   Future<void> deleteSaveSlot(int id) async {
-    final isar = await db;
-    await isar.writeTxn(() async {
-      await isar.saveSlots.delete(id);
-    });
+    final box = await _boxFuture;
+    await box.delete(id);
   }
 
-  /// تمام داده های دیتابیس را پاک میکند
+  /// تمام داده‌های دیتابیس را پاک می‌کند (برای تست یا ریست کامل).
   Future<void> clearDatabase() async {
-    final isar = await db;
-    await isar.writeTxn(() async {
-      await isar.clear();
-    });
+    final box = await _boxFuture;
+    await box.clear();
   }
 }
