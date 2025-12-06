@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:myapp/collections.dart';
 
@@ -82,5 +83,35 @@ class DBService {
   Future<void> clearDatabase() async {
     final box = await _boxFuture;
     await box.clear();
+  }
+
+  /// صادرات یک اسلات ذخیره به فرمت JSON.
+  /// [id]: شناسه اسلات مورد نظر
+  /// خروجی: رشته JSON که می‌تواند در فایل ذخیره شود
+  Future<String> exportSaveSlotToJson(int id) async {
+    final slot = await loadGame(id);
+    if (slot == null) {
+      throw Exception('اسلات با شناسه $id یافت نشد.');
+    }
+    final jsonMap = slot.toJson();
+    return jsonEncode(jsonMap);
+  }
+
+  /// وارد کردن یک اسلات ذخیره از رشته JSON.
+  /// [jsonString]: رشته JSON حاوی اطلاعات بازی
+  /// خروجی: اسلات ذخیره شده جدید با ID تولید شده
+  Future<SaveSlot> importSaveSlotFromJson(String jsonString) async {
+    try {
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      final slot = SaveSlot.fromJson(jsonMap);
+
+      // ID را null می‌کنیم تا Hive یک ID جدید تولید کند
+      slot.id = null;
+
+      await saveGame(slot);
+      return slot;
+    } catch (e) {
+      throw Exception('خطا در پارس کردن JSON: $e');
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,8 @@ import 'package:myapp/screens/settings_screen.dart'; // وارد کردن صفح
 import 'package:myapp/screens/welcome_screen.dart'; // وارد کردن صفحه خوش‌آمدگویی
 import 'package:myapp/services/tts_service.dart';
 import 'package:myapp/widgets/image_display.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 
 void main() {
   // اطمینان از اینکه Isar قبل از اجرای برنامه آماده شده است
@@ -46,15 +49,32 @@ class MyApp extends ConsumerWidget {
       useMaterial3: true,
       brightness: Brightness.dark,
       textTheme: GoogleFonts.vazirmatnTextTheme(ThemeData.dark().textTheme),
-      scaffoldBackgroundColor: const Color(0xFF1C1C1C), // Nothing Phone Dark
+      scaffoldBackgroundColor: const Color(0xFF050505), // Nothing Phone Black
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFFDB3838), // Red accent
         brightness: Brightness.dark,
-        surface: const Color(0xFF1C1C1C),
+        surface: const Color(0xFF101010),
+        onSurface: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1C1C1C),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      // تنظیمات پیش‌فرض دکمه‌ها
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xFFDB3838),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          side: const BorderSide(color: Colors.white24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
     );
 
@@ -154,6 +174,67 @@ class SaveLoadScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _exportSaveSlot(
+      BuildContext context, WidgetRef ref, int slotId) async {
+    try {
+      final dbService = ref.read(dbServiceProvider);
+      final jsonString = await dbService.exportSaveSlotToJson(slotId);
+
+      // ذخیره به فایل و اشتراک‌گذاری
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            Uint8List.fromList(jsonString.codeUnits),
+            name: 'save_slot_$slotId.json',
+            mimeType: 'application/json',
+          )
+        ],
+        text: 'بازی ذخیره شده داستان',
+      );
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('فایل JSON آماده اشتراک‌گذاری است.')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('خطا در صادرات: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _importSaveSlot(BuildContext context, WidgetRef ref) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result == null || result.files.single.bytes == null) {
+        return;
+      }
+
+      final jsonString = String.fromCharCodes(result.files.single.bytes!);
+      final dbService = ref.read(dbServiceProvider);
+      await dbService.importSaveSlotFromJson(jsonString);
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('بازی با موفقیت وارد شد!'),
+            backgroundColor: Colors.green),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('خطا در وارد کردن: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final saveSlotsAsync = ref.watch(saveSlotsProvider);
@@ -181,6 +262,12 @@ class SaveLoadScreen extends ConsumerWidget {
                         subtitle: Text(formattedDate),
                         trailing:
                             Row(mainAxisSize: MainAxisSize.min, children: [
+                          IconButton(
+                              icon: const Icon(Icons.upload_file,
+                                  color: Colors.blueAccent),
+                              tooltip: "صادرات JSON",
+                              onPressed: () =>
+                                  _exportSaveSlot(context, ref, slot.id!)),
                           IconButton(
                               icon: const Icon(Icons.delete_outline,
                                   color: Colors.redAccent),
@@ -237,15 +324,28 @@ class SaveLoadScreen extends ConsumerWidget {
                 );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: const Text('ذخیره بازی جدید'),
-        onPressed: () async {
-          await ref.read(gameControllerProvider.notifier).saveGame();
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('بازی با موفقیت در اسلات جدید ذخیره شد.')));
-        },
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: 'import',
+            onPressed: () => _importSaveSlot(context, ref),
+            tooltip: 'وارد کردن JSON',
+            child: const Icon(Icons.download_outlined),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'save',
+            icon: const Icon(Icons.add),
+            label: const Text('ذخیره بازی جدید'),
+            onPressed: () async {
+              await ref.read(gameControllerProvider.notifier).saveGame();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('بازی با موفقیت در اسلات جدید ذخیره شد.')));
+            },
+          ),
+        ],
       ),
     );
   }

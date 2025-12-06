@@ -36,6 +36,28 @@ class SaveSlot extends HiveObject {
     this.stats,
     required this.inventoryItems,
   });
+
+  Map<String, dynamic> toJson() => {
+        'version': '1.0',
+        'id': id,
+        'saveDate': saveDate.toIso8601String(),
+        'storyLog': storyLog,
+        'stats': stats?.toJson(),
+        'inventoryItems': inventoryItems.map((item) => item.toJson()).toList(),
+      };
+
+  factory SaveSlot.fromJson(Map<String, dynamic> json) {
+    return SaveSlot(
+      id: json['id'],
+      saveDate: DateTime.parse(json['saveDate']),
+      storyLog: List<String>.from(json['storyLog'] ?? []),
+      stats: json['stats'] != null ? GameStatsDB.fromJson(json['stats']) : null,
+      inventoryItems: (json['inventoryItems'] as List?)
+              ?.map((item) => InventoryItemDB.fromJson(item))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 /// مدل دیتابیس برای وضعیت‌های بازیکن.
@@ -61,6 +83,22 @@ class GameStatsDB {
     this.hunger = 100,
     this.energy = 100,
   });
+
+  Map<String, dynamic> toJson() => {
+        'health': health,
+        'sanity': sanity,
+        'hunger': hunger,
+        'energy': energy,
+      };
+
+  factory GameStatsDB.fromJson(Map<String, dynamic> json) {
+    return GameStatsDB(
+      health: json['health'] ?? 100,
+      sanity: json['sanity'] ?? 100,
+      hunger: json['hunger'] ?? 100,
+      energy: json['energy'] ?? 100,
+    );
+  }
 }
 
 /// مدل دیتابیس برای آیتم‌های کوله‌پشتی.
@@ -76,4 +114,16 @@ class InventoryItemDB {
     this.name = '',
     this.description = '',
   });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'description': description,
+      };
+
+  factory InventoryItemDB.fromJson(Map<String, dynamic> json) {
+    return InventoryItemDB(
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+    );
+  }
 }

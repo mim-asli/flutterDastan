@@ -43,6 +43,7 @@ class SettingsProvider extends StateNotifier<AsyncValue<void>> {
           _prefs.getBool('isImageGenerationEnabled') ?? false;
       _isDeepSeekEnabled = _prefs.getBool('isDeepSeekEnabled') ?? false;
       _themeMode = _prefs.getString('themeMode') ?? 'dark';
+      _fontFamily = _prefs.getString('fontFamily') ?? 'Vazirmatn';
 
       state = const AsyncValue.data(null);
     } catch (e, stackTrace) {
@@ -83,6 +84,16 @@ class SettingsProvider extends StateNotifier<AsyncValue<void>> {
   Future<void> setThemeMode(String mode) async {
     _themeMode = mode;
     await _prefs.setString('themeMode', mode);
+    state = const AsyncValue.data(null);
+  }
+
+  // Font Family
+  String _fontFamily = 'Vazirmatn';
+  String get fontFamily => _fontFamily;
+
+  Future<void> setFontFamily(String font) async {
+    _fontFamily = font;
+    await _prefs.setString('fontFamily', font);
     state = const AsyncValue.data(null);
   }
 }

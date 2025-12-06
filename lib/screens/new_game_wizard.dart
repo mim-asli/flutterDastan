@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/data/game_data.dart';
 import 'package:myapp/models.dart';
 import 'package:myapp/providers.dart';
 import 'package:myapp/main.dart';
 
-// وضعیت موقت ویزارد برای نگهداری انتخاب‌های کاربر
 final newGameWizardProvider =
     StateNotifierProvider<NewGameWizardNotifier, WizardState>((ref) {
   return NewGameWizardNotifier();
@@ -202,96 +202,267 @@ class WorldBasicsPage extends ConsumerWidget {
     final notifier = ref.read(newGameWizardProvider.notifier);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'جهان خود را بسازید',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          Text(
+            '۱. مبانی جهان',
+            style: GoogleFonts.vazirmatn(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          Text(
+            'قوانین و حال و هوای کلی دنیای خود را مشخص کنید.',
+            style: GoogleFonts.vazirmatn(
+              fontSize: 14,
+              color: Colors.white54,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
 
           // نام جهان
           TextField(
-            decoration: const InputDecoration(
-              labelText: 'نام جهان',
-              border: OutlineInputBorder(),
-              helperText: 'نامی برای دنیای بازی خود انتخاب کنید',
+            style: GoogleFonts.vazirmatn(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: 'عنوان سناریو (مثلا: انتقام جادوگر تاریکی)',
+              labelStyle: const TextStyle(color: Colors.white54),
+              filled: true,
+              fillColor: Colors.white.withAlpha(10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.white12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFDB3838)),
+              ),
             ),
             onChanged: notifier.updateWorldName,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
           // ژانر داستان
-          DropdownButtonFormField<String>(
-            initialValue: wizardState.genre,
-            decoration: const InputDecoration(
-              labelText: 'ژانر داستان',
-              border: OutlineInputBorder(),
+          Text(
+            'ژانر',
+            style: GoogleFonts.vazirmatn(
+              fontSize: 16,
+              color: const Color(0xFFDB3838),
+              fontWeight: FontWeight.bold,
             ),
-            items: const [
-              DropdownMenuItem(
-                  value: 'Fantasy', child: Text('فانتزی (Fantasy)')),
-              DropdownMenuItem(
-                  value: 'Sci-Fi', child: Text('علمی-تخیلی (Sci-Fi)')),
-              DropdownMenuItem(value: 'Horror', child: Text('وحشت (Horror)')),
-              DropdownMenuItem(
-                  value: 'Adventure', child: Text('ماجراجویی (Adventure)')),
-              DropdownMenuItem(
-                  value: 'Mystery', child: Text('معمایی-جنایی (Mystery)')),
-              DropdownMenuItem(
-                  value: 'Post-Apocalyptic', child: Text('پست-آپوکالیپس')),
-              DropdownMenuItem(value: 'Superheroic', child: Text('ابرقهرمانی')),
-              DropdownMenuItem(
-                  value: 'Slice of Life', child: Text('زندگی روزمره')),
-            ],
-            onChanged: (value) {
-              if (value != null) notifier.updateGenre(value);
-            },
+            textAlign: TextAlign.right,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.5,
+            children: [
+              _SelectionCard(
+                label: 'فانتزی',
+                icon: Icons.auto_fix_high,
+                isSelected: wizardState.genre == 'Fantasy',
+                onTap: () => notifier.updateGenre('Fantasy'),
+              ),
+              _SelectionCard(
+                label: 'علمی-تخیلی',
+                icon: Icons.rocket_launch,
+                isSelected: wizardState.genre == 'Sci-Fi',
+                onTap: () => notifier.updateGenre('Sci-Fi'),
+              ),
+              _SelectionCard(
+                label: 'ترسناک',
+                icon: Icons.psychology_alt, // Skull replacement
+                isSelected: wizardState.genre == 'Horror',
+                onTap: () => notifier.updateGenre('Horror'),
+              ),
+              _SelectionCard(
+                label: 'ماجراجویی',
+                icon: Icons.explore,
+                isSelected: wizardState.genre == 'Adventure',
+                onTap: () => notifier.updateGenre('Adventure'),
+              ),
+              _SelectionCard(
+                label: 'معمایی',
+                icon: Icons.fingerprint,
+                isSelected: wizardState.genre == 'Mystery',
+                onTap: () => notifier.updateGenre('Mystery'),
+              ),
+              _SelectionCard(
+                label: 'پسا-آخرالزمانی',
+                icon: Icons.warning_amber, // Radioactive replacement
+                isSelected: wizardState.genre == 'Post-Apocalyptic',
+                onTap: () => notifier.updateGenre('Post-Apocalyptic'),
+              ),
+              _SelectionCard(
+                label: 'ابرقهرمانی',
+                icon: Icons.bolt,
+                isSelected: wizardState.genre == 'Superheroic',
+                onTap: () => notifier.updateGenre('Superheroic'),
+              ),
+              _SelectionCard(
+                label: 'کلاسیک',
+                icon: Icons.account_balance,
+                isSelected: wizardState.genre == 'Slice of Life',
+                onTap: () => notifier.updateGenre('Slice of Life'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
 
           // سطح سختی
-          DropdownButtonFormField<String>(
-            initialValue: wizardState.difficulty,
-            decoration: const InputDecoration(
-              labelText: 'سطح سختی',
-              border: OutlineInputBorder(),
+          Text(
+            'سطح دشواری',
+            style: GoogleFonts.vazirmatn(
+              fontSize: 16,
+              color: const Color(0xFFDB3838),
+              fontWeight: FontWeight.bold,
             ),
-            items: const [
-              DropdownMenuItem(value: 'Easy', child: Text('آسان (منابع زیاد)')),
-              DropdownMenuItem(
-                  value: 'Medium', child: Text('متوسط (استاندارد)')),
-              DropdownMenuItem(value: 'Hard', child: Text('سخت (منابع محدود)')),
-              DropdownMenuItem(
-                  value: 'Very Hard', child: Text('خیلی سخت (حداقل منابع)')),
-            ],
-            onChanged: (value) {
-              if (value != null) notifier.updateDifficulty(value);
-            },
+            textAlign: TextAlign.right,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _SelectionCard(
+                  label: 'آسان\n(امتیاز 15)',
+                  isSelected: wizardState.difficulty == 'Easy',
+                  onTap: () => notifier.updateDifficulty('Easy'),
+                  isSmall: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SelectionCard(
+                  label: 'معمولی\n(امتیاز 10)',
+                  isSelected: wizardState.difficulty == 'Medium',
+                  onTap: () => notifier.updateDifficulty('Medium'),
+                  isSmall: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SelectionCard(
+                  label: 'سخت\n(امتیاز 7)',
+                  isSelected: wizardState.difficulty == 'Hard',
+                  onTap: () => notifier.updateDifficulty('Hard'),
+                  isSmall: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
 
           // سبک راوی
-          DropdownButtonFormField<String>(
-            initialValue: wizardState.narratorStyle,
-            decoration: const InputDecoration(
-              labelText: 'سبک داستان‌گویی',
-              border: OutlineInputBorder(),
+          Text(
+            'سبک راوی (GM)',
+            style: GoogleFonts.vazirmatn(
+              fontSize: 16,
+              color: const Color(0xFFDB3838),
+              fontWeight: FontWeight.bold,
             ),
-            items: const [
-              DropdownMenuItem(value: 'Epic', child: Text('حماسی')),
-              DropdownMenuItem(value: 'Serious', child: Text('جدی و تاریک')),
-              DropdownMenuItem(value: 'Humorous', child: Text('طنز و شوخ')),
-              DropdownMenuItem(value: 'Romantic', child: Text('رمانتیک')),
-            ],
-            onChanged: (value) {
-              if (value != null) notifier.updateNarratorStyle(value);
-            },
+            textAlign: TextAlign.right,
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: wizardState.narratorStyle,
+                isExpanded: true,
+                dropdownColor: const Color(0xFF1E1E1E),
+                icon: const Icon(Icons.keyboard_arrow_down,
+                    color: Colors.white54),
+                style: GoogleFonts.vazirmatn(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'Epic', child: Text('روایی و سینمایی')),
+                  DropdownMenuItem(
+                      value: 'Serious', child: Text('جدی و تاریک')),
+                  DropdownMenuItem(value: 'Humorous', child: Text('طنز و شوخ')),
+                  DropdownMenuItem(value: 'Romantic', child: Text('رمانتیک')),
+                ],
+                onChanged: (value) {
+                  if (value != null) notifier.updateNarratorStyle(value);
+                },
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SelectionCard extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isSmall;
+
+  const _SelectionCard({
+    required this.label,
+    this.icon,
+    required this.isSelected,
+    required this.onTap,
+    this.isSmall = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.transparent : const Color(0xFF101010),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFDB3838) : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.white54,
+                size: 28,
+              ),
+              const SizedBox(height: 12),
+            ],
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.vazirmatn(
+                fontSize: isSmall ? 12 : 14,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.white : Colors.white70,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

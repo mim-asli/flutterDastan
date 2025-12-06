@@ -14,13 +14,11 @@ class SettingsScreen extends ConsumerWidget {
     // Controllers
     final apiKeyController =
         TextEditingController(text: settingsNotifier.cloudApiKey);
-    final localUrlController =
-        TextEditingController(text: settingsNotifier.localApiUrl);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF151515), // Dark background
+        // Background inherited from theme
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -28,14 +26,14 @@ class SettingsScreen extends ConsumerWidget {
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.settings, color: Colors.blueAccent),
+              const Icon(Icons.settings, color: Color(0xFFDB3838)), // Red icon
               const SizedBox(width: 8),
               Text(
                 'تنظیمات',
                 style: GoogleFonts.vazirmatn(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: const Color(0xFFDB3838), // Red title
                 ),
               ),
             ],
@@ -98,81 +96,119 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // --- Model Guide Section ---
+                  // --- Font Section (NEW) ---
+                  _buildSectionContainer(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(
+                          icon: Icons.text_fields,
+                          title: 'فونت برنامه',
+                          subtitle: 'فونت اصلی متن‌های بازی را انتخاب کنید.',
+                        ),
+                        const SizedBox(height: 24),
+                        // Placeholder for Font Selection - currently just a visual representation
+                        // In a real app, this would update a provider
+                        Column(
+                          children: [
+                            _buildFontOption(
+                              context,
+                              title: 'وزیرمتن (پیش‌فرض)',
+                              fontFamily: 'Vazirmatn',
+                              isSelected:
+                                  settingsNotifier.fontFamily == 'Vazirmatn',
+                              onTap: () =>
+                                  settingsNotifier.setFontFamily('Vazirmatn'),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildFontOption(
+                              context,
+                              title: 'ربات (Roboto)',
+                              fontFamily: 'Roboto',
+                              isSelected:
+                                  settingsNotifier.fontFamily == 'Roboto',
+                              onTap: () =>
+                                  settingsNotifier.setFontFamily('Roboto'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // --- AI Config Section ---
                   _buildSectionContainer(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionHeader(
                           icon: Icons.psychology,
-                          title: 'راهنمای انتخاب و استفاده از مدل',
+                          title: 'پیکربندی هوش مصنوعی',
                           subtitle:
-                              'توصیه‌هایی برای به دست آوردن بهترین تجربه داستانی با توجه به منابع سیستم شما.',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildExpansionTile(
-                          title: 'ابری در مقابل محلی',
-                          icon: Icons.cloud_sync_outlined,
-                          content:
-                              'مدل‌های ابری (مانند Gemini) کیفیت بالاتری دارند اما به اینترنت نیاز دارند. مدل‌های محلی حریم خصوصی بیشتری دارند اما به سخت‌افزار قوی نیاز دارند.',
-                        ),
-                        _buildExpansionTile(
-                          title: 'چگونه بهترین مدل محلی را انتخاب کنیم؟',
-                          icon: Icons.layers_outlined,
-                          content:
-                              'برای سیستم‌های ضعیف‌تر از مدل‌های 7B یا 8B استفاده کنید. اگر کارت گرافیک قوی دارید، مدل‌های بزرگتر کیفیت بهتری دارند.',
-                        ),
-                        _buildExpansionTile(
-                          title: 'کوانتیزیشن (Quantization) چیست؟',
-                          icon: Icons.compress,
-                          content:
-                              'روشی برای کاهش حجم مدل‌ها. مدل‌های Q4_K_M تعادل خوبی بین کیفیت و سرعت دارند.',
-                        ),
-                        _buildExpansionTile(
-                          title: 'دریافت آدرس Endpoint از ابزارها',
-                          icon: Icons.link,
-                          content:
-                              'در LM Studio سرور را استارت کنید و آدرس نمایش داده شده (معمولا http://localhost:1234/v1) را کپی کنید.',
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // --- Image Generation Section ---
-                  _buildSectionContainer(
-                    child: Column(
-                      children: [
-                        _buildSectionHeader(
-                          icon: Icons.image_outlined,
-                          title: 'تولید تصویر با هوش مصنوعی',
-                          subtitle:
-                              'به‌طور خودکار برای لحظات کلیدی داستان، تصاویر تولید کنید. (ممکن است هزینه اضافی داشته باشد)',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSwitchRow(
-                          label: 'فعالسازی تولید تصویر',
-                          value: settingsNotifier.isImageGenerationEnabled,
-                          onChanged: (val) =>
-                              settingsNotifier.setImageGenerationEnabled(val),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // --- Google Gemini API Keys ---
-                  _buildSectionContainer(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionHeader(
-                          icon: Icons.vpn_key_outlined,
-                          title: 'کلیدهای Google Gemini API',
-                          subtitle:
-                              'موتور اصلی تولید داستان. می‌توانید چندین کلید برای چرخش خودکار اضافه کنید.',
+                              'موتور هوش مصنوعی بازی را انتخاب و پیکربندی کنید. می‌توانید از مدل‌های ابری (مانند Gemini) یا یک مدل محلی (Local LLM) استفاده کنید.',
                         ),
                         const SizedBox(height: 24),
+
+                        // Model Selection Dropdown (Styled)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: settingsNotifier.aiProviderType ==
+                                      AiProviderType.cloud
+                                  ? 'Google Gemini'
+                                  : 'Local LLM',
+                              isExpanded: true,
+                              dropdownColor: const Color(0xFF1E1E1E),
+                              style: GoogleFonts.vazirmatn(color: Colors.white),
+                              items: const [
+                                DropdownMenuItem(
+                                    value: 'Google Gemini',
+                                    child: Text('Google Gemini')),
+                                DropdownMenuItem(
+                                    value: 'Local LLM',
+                                    child: Text('مدل زبان محلی')),
+                              ],
+                              onChanged: (val) {
+                                if (val == 'Google Gemini') {
+                                  settingsNotifier
+                                      .setAiProviderType(AiProviderType.cloud);
+                                } else {
+                                  settingsNotifier
+                                      .setAiProviderType(AiProviderType.local);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'مدل زبان محلی',
+                          style: GoogleFonts.vazirmatn(
+                              fontSize: 12, color: Colors.white38),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // API Key Input
+                        Text(
+                          'دریافت کلید API از Google AI Studio',
+                          style: GoogleFonts.vazirmatn(
+                            fontSize: 12,
+                            color: const Color(0xFFDB3838),
+                            decoration: TextDecoration.underline,
+                            decorationColor: const Color(0xFFDB3838),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
                         Row(
                           children: [
                             Expanded(
@@ -181,14 +217,25 @@ class SettingsScreen extends ConsumerWidget {
                                 style: GoogleFonts.roboto(color: Colors.white),
                                 decoration: InputDecoration(
                                   hintText:
-                                      '....................................',
+                                      'جدید اضافه کنید API یک کلید', // RTL placeholder
                                   hintStyle:
                                       const TextStyle(color: Colors.white24),
                                   filled: true,
-                                  fillColor: Colors.white.withAlpha(10),
+                                  fillColor: Colors.black,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide.none,
+                                    borderSide:
+                                        const BorderSide(color: Colors.white12),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide:
+                                        const BorderSide(color: Colors.white12),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFFDB3838)),
                                   ),
                                   contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 16),
@@ -198,113 +245,32 @@ class SettingsScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(
+                            SizedBox(
                               height: 48,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF3A6FE2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: TextButton.icon(
-                                onPressed: () {}, // Logic to add key
-                                icon:
-                                    const Icon(Icons.add, color: Colors.white),
-                                label: Text('افزودن کلید',
-                                    style: GoogleFonts.vazirmatn(
-                                        color: Colors.white)),
+                              child: FilledButton.icon(
+                                onPressed: () {
+                                  FocusScope.of(context).unfocus();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'کلید API ذخیره شد.',
+                                        style: GoogleFonts.vazirmatn(),
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.check),
+                                label: const Text('ذخیره'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFDB3838),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            style: OutlinedButton.styleFrom(
-                              side:
-                                  BorderSide(color: Colors.white.withAlpha(20)),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: Text('تست همه کلیدهای فعال',
-                                style: GoogleFonts.vazirmatn(
-                                    color: Colors.white70)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // --- DeepSeek AI (Optional) ---
-                  _buildSectionContainer(
-                    child: Column(
-                      children: [
-                        _buildSectionHeader(
-                          icon: Icons.smart_toy_outlined,
-                          title: 'هوش مصنوعی DeepSeek (اختیاری)',
-                          subtitle:
-                              'از مدل‌های زبان DeepSeek به عنوان جایگزین یا پشتیبان استفاده کنید. آدرس Endpoint معمولاً به `/v1/chat/completions` ختم می‌شود.',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSwitchRow(
-                          label: 'فعالسازی DeepSeek',
-                          value: settingsNotifier.isDeepSeekEnabled,
-                          onChanged: (val) =>
-                              settingsNotifier.setDeepSeekEnabled(val),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // --- Local AI (Optional) ---
-                  _buildSectionContainer(
-                    child: Column(
-                      children: [
-                        _buildSectionHeader(
-                          icon: Icons.computer_outlined,
-                          title: 'هوش مصنوعی محلی (اختیاری)',
-                          subtitle:
-                              'بازی را به یک مدل زبان در حال اجرا روی سیستم خود متصل کنید. از ابزارهایی مانند Ollama یا LM Studio برای اجرای مدل‌ها استفاده کنید.',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSwitchRow(
-                          label: 'فعالسازی مدل محلی',
-                          value: settingsNotifier.aiProviderType ==
-                              AiProviderType.local,
-                          onChanged: (val) {
-                            // Toggle logic: if turning on, set to local. If turning off, set to cloud.
-                            // This is a simplification based on the UI switch metaphor.
-                            settingsNotifier.setAiProviderType(val
-                                ? AiProviderType.local
-                                : AiProviderType.cloud);
-                          },
-                        ),
-                        if (settingsNotifier.aiProviderType ==
-                            AiProviderType.local) ...[
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: localUrlController,
-                            style: GoogleFonts.roboto(color: Colors.white),
-                            decoration: InputDecoration(
-                              labelText: 'آدرس سرور محلی',
-                              labelStyle:
-                                  const TextStyle(color: Colors.white54),
-                              hintText: 'http://localhost:1234/v1',
-                              hintStyle: const TextStyle(color: Colors.white24),
-                              filled: true,
-                              fillColor: Colors.white.withAlpha(10),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            onChanged: (val) =>
-                                settingsNotifier.setLocalApiUrl(val),
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -322,7 +288,7 @@ class SettingsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: const Color(0xFF101010), // Slightly lighter than background
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withAlpha(10)),
       ),
@@ -339,7 +305,7 @@ class SettingsScreen extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Icon(icon, color: const Color(0xFF3A6FE2), size: 24),
+            Icon(icon, color: const Color(0xFFDB3838), size: 24), // Red icon
             const SizedBox(width: 8),
             Text(
               title,
@@ -376,21 +342,18 @@ class SettingsScreen extends ConsumerWidget {
         height: 80,
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFDB3838).withAlpha(50)
-              : Colors.transparent,
+              ? const Color(0xFFDB3838).withAlpha(20)
+              : const Color(0xFF1E1E1E), // Dark card bg
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFFDB3838)
-                : Colors.white.withAlpha(20),
-            width: isSelected ? 2 : 1,
+            color: isSelected ? const Color(0xFFDB3838) : Colors.transparent,
+            width: isSelected ? 1 : 0,
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon,
-                color: isSelected ? const Color(0xFFDB3838) : Colors.white70),
+            Icon(icon, color: isSelected ? Colors.white : Colors.white70),
             const SizedBox(height: 8),
             Text(
               title,
@@ -405,55 +368,45 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildExpansionTile(
+  Widget _buildFontOption(BuildContext context,
       {required String title,
-      required IconData icon,
-      required String content}) {
-    return Theme(
-      data: ThemeData(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        leading: Icon(icon, color: Colors.white54, size: 20),
-        title: Text(
-          title,
-          style: GoogleFonts.vazirmatn(fontSize: 14, color: Colors.white70),
+      required String fontFamily,
+      required bool isSelected,
+      required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: isSelected ? const Color(0xFFDB3838) : Colors.white12),
+          borderRadius: BorderRadius.circular(8),
+          color: isSelected
+              ? const Color(0xFFDB3838).withAlpha(20)
+              : Colors.transparent,
         ),
-        iconColor: Colors.white54,
-        collapsedIconColor: Colors.white54,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16, right: 16, left: 16),
-            child: Text(
-              content,
-              style: GoogleFonts.vazirmatn(
-                  fontSize: 13, color: Colors.white38, height: 1.6),
+        child: Row(
+          children: [
+            Icon(
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: isSelected ? const Color(0xFFDB3838) : Colors.white54,
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: GoogleFonts.getFont(
+                fontFamily == 'Vazirmatn' ? 'Vazirmatn' : fontFamily,
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.white : Colors.white70,
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildSwitchRow(
-      {required String label,
-      required bool value,
-      required ValueChanged<bool> onChanged}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.vazirmatn(fontSize: 14, color: Colors.white70),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: const Color(0xFF3A6FE2),
-          activeTrackColor: const Color(0xFF3A6FE2).withAlpha(100),
-          inactiveThumbColor: Colors.grey,
-          inactiveTrackColor: Colors.white.withAlpha(20),
-        ),
-      ],
     );
   }
 }
