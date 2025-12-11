@@ -17,13 +17,15 @@ class LocalAIService implements BaseAIService {
 
   /// نام دقیق مدلی که در LM Studio بارگذاری شده است.
   /// این نام باید دقیقاً با نام مدل در سرور محلی یکی باشد.
-  final String _modelName = "gemma-3-4b-persian-v0";
+  /// نام دقیق مدلی که در LM Studio بارگذاری شده است.
+  /// این نام باید دقیقاً با نام مدل در سرور محلی یکی باشد.
+  final String _modelName;
 
   /// تاریخچه مکالمه با مدل که برای حفظ زمینه داستان استفاده می‌شود.
   /// برخلاف سرویس ابری که خودش تاریخچه را مدیریت می‌کند، اینجا باید دستی مدیریت کنیم.
   List<Map<String, String>> _chatHistory = [];
 
-  LocalAIService(this._baseUrl) {
+  LocalAIService(this._baseUrl, this._modelName) {
     _resetChatHistory();
   }
 

@@ -27,6 +27,7 @@ final aiServiceProvider = Provider<BaseAIService>((ref) {
     case AiProviderType.local:
       return LocalAIService(
         settings.localApiUrl,
+        settings.localModelName,
       ); // سرویس محلی را با آدرس تنظیم شده ایجاد کن
     case AiProviderType.cloud:
       final apiKey = settings.cloudApiKey;
@@ -35,7 +36,8 @@ final aiServiceProvider = Provider<BaseAIService>((ref) {
           'کلید API ابری در صفحه تنظیمات وارد نشده است. لطفاً کلید خود را وارد کنید.',
         );
       }
-      return CloudAIService(apiKey); // سرویس ابری را با کلید API ایجاد کن
+      return CloudAIService(apiKey,
+          settings.imageGenApiKey); // سرویس ابری را با کلید API ایجاد کن
   }
 });
 
@@ -105,6 +107,20 @@ final craftingSelectionProvider = StateProvider<List<InventoryItem>>(
   (ref) => [],
 );
 
+/// لیست مهارت‌های آموخته شده توسط بازیکن.
+final skillsProvider = StateProvider<List<String>>((ref) => []);
+
+/// لیست مأموریت‌های فعال بازیکن.
+final missionsProvider = StateProvider<List<String>>((ref) => []);
+
+/// لیست موجودات یا اشیاء حاضر در صحنه فعلی.
+final sceneEntitiesProvider =
+    StateProvider<List<Map<String, dynamic>>>((ref) => []);
+
+/// لیست مکان‌های کشف شده روی نقشه.
+final knownLocationsProvider =
+    StateProvider<List<Map<String, dynamic>>>((ref) => []);
+
 // ------------------- وضعیت‌های سیستم ذخیره (Save System States) -------------------
 
 /// دریافت لیست تمام اسلات‌های ذخیره شده از دیتابیس.
@@ -170,6 +186,45 @@ class GameController extends StateNotifier<void> {
       // اعمال تغییرات وضعیت (اگر وجود داشته باشد)
       if (response.statusUpdates != null) {
         _updateStats(response.statusUpdates!);
+      }
+
+      // به‌روزرسانی لیست‌های پویا
+      if (response.newSkills != null) {
+        _ref.read(skillsProvider.notifier).update((state) {
+          final set = state.toSet()..addAll(response.newSkills!);
+          return set.toList();
+        });
+      }
+
+      if (response.newMissions != null) {
+        _ref.read(missionsProvider.notifier).update((state) {
+          final set = state.toSet()..addAll(response.newMissions!);
+          return set.toList();
+        });
+      }
+
+      if (response.completedMissions != null) {
+        _ref.read(missionsProvider.notifier).update((state) {
+          return state
+              .where((m) => !response.completedMissions!.contains(m))
+              .toList();
+        });
+      }
+
+      if (response.sceneEntities != null) {
+        _ref.read(sceneEntitiesProvider.notifier).state =
+            response.sceneEntities!;
+      }
+
+      if (response.mapUpdates != null) {
+        _ref.read(knownLocationsProvider.notifier).update((state) {
+          // جلوگیری از تکراری شدن مکان‌ها بر اساس نام
+          final existingNames = state.map((l) => l['name']).toSet();
+          final newLocations = response.mapUpdates!
+              .where((l) => !existingNames.contains(l['name']))
+              .toList();
+          return [...state, ...newLocations];
+        });
       }
 
       // مدیریت شمارنده نوبت برای خلاصه‌سازی حافظه
@@ -273,6 +328,12 @@ class GameController extends StateNotifier<void> {
     _ref.read(storyLogProvider.notifier).state = [startText];
     _ref.read(optionsProvider.notifier).state = ["شروع بازی"];
     _ref.read(turnCounterProvider.notifier).state = 0;
+
+    // ریست کردن سایر لیست‌ها
+    _ref.read(skillsProvider.notifier).state = [];
+    _ref.read(missionsProvider.notifier).state = [];
+    _ref.read(sceneEntitiesProvider.notifier).state = [];
+    _ref.read(knownLocationsProvider.notifier).state = [];
   }
 
   /// ادامه آخرین بازی ذخیره شده.

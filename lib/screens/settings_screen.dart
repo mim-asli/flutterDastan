@@ -7,18 +7,11 @@ class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
+  @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settingsState = ref.watch(settingsProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
-
-    // Controllers
-    final apiKeyController =
-        TextEditingController(text: settingsNotifier.cloudApiKey);
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        // Background inherited from theme
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -26,14 +19,14 @@ class SettingsScreen extends ConsumerWidget {
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.settings, color: Color(0xFFDB3838)), // Red icon
+              const Icon(Icons.settings, color: Color(0xFFDB3838)),
               const SizedBox(width: 8),
               Text(
                 'تنظیمات',
                 style: GoogleFonts.vazirmatn(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFFDB3838), // Red title
+                  color: const Color(0xFFDB3838),
                 ),
               ),
             ],
@@ -43,13 +36,37 @@ class SettingsScreen extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
-        body: settingsState.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(
-              child:
-                  Text('خطا: $err', style: const TextStyle(color: Colors.red))),
-          data: (_) {
-            return SingleChildScrollView(
+        body: const SettingsContent(),
+      ),
+    );
+  }
+}
+
+class SettingsContent extends ConsumerWidget {
+  const SettingsContent({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsState = ref.watch(settingsProvider);
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+
+    // Controllers
+    final localModelNameController =
+        TextEditingController(text: settingsNotifier.localModelName);
+    final cloudApiKeyController =
+        TextEditingController(text: settingsNotifier.cloudApiKey);
+    final imageGenApiKeyController =
+        TextEditingController(text: settingsNotifier.imageGenApiKey);
+
+    return settingsState.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(
+          child: Text('خطا: $err', style: const TextStyle(color: Colors.red))),
+      data: (_) {
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -107,8 +124,6 @@ class SettingsScreen extends ConsumerWidget {
                           subtitle: 'فونت اصلی متن‌های بازی را انتخاب کنید.',
                         ),
                         const SizedBox(height: 24),
-                        // Placeholder for Font Selection - currently just a visual representation
-                        // In a real app, this would update a provider
                         Column(
                           children: [
                             _buildFontOption(
@@ -189,11 +204,40 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'مدل زبان محلی',
-                          style: GoogleFonts.vazirmatn(
-                              fontSize: 12, color: Colors.white38),
-                        ),
+                        const SizedBox(height: 8),
+                        if (settingsNotifier.aiProviderType ==
+                            AiProviderType.local) ...[
+                          Text(
+                            'نام مدل محلی (مانند llama-3.2-1b)',
+                            style: GoogleFonts.vazirmatn(
+                                fontSize: 12, color: Colors.white38),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: localModelNameController,
+                            style: GoogleFonts.roboto(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'نام مدل (مثلاً gemma-2-9b-it)',
+                              hintStyle: const TextStyle(color: Colors.white24),
+                              filled: true,
+                              fillColor: Colors.black,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide:
+                                    const BorderSide(color: Colors.white12),
+                              ),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                            ),
+                            onChanged: (val) =>
+                                settingsNotifier.setLocalModelName(val),
+                          ),
+                        ] else
+                          Text(
+                            'مدل زبان محلی',
+                            style: GoogleFonts.vazirmatn(
+                                fontSize: 12, color: Colors.white38),
+                          ),
 
                         const SizedBox(height: 24),
 
@@ -213,7 +257,7 @@ class SettingsScreen extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: TextField(
-                                controller: apiKeyController,
+                                controller: cloudApiKeyController,
                                 style: GoogleFonts.roboto(color: Colors.white),
                                 decoration: InputDecoration(
                                   hintText:
@@ -271,16 +315,91 @@ class SettingsScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
+
+                        const SizedBox(height: 24),
+
+                        // Image Generation API Key Input
+                        Text(
+                          'کلید API برای تولید تصویر (OpenAI DALL-E) (اختیاری)',
+                          style: GoogleFonts.vazirmatn(
+                            fontSize: 12,
+                            color: const Color(0xFFDB3838),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: imageGenApiKeyController,
+                                style: GoogleFonts.roboto(color: Colors.white),
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'sk-proj-... (کلید OpenAI)', // RTL placeholder
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white24),
+                                  filled: true,
+                                  fillColor: Colors.black,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide:
+                                        const BorderSide(color: Colors.white12),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide:
+                                        const BorderSide(color: Colors.white12),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: const BorderSide(
+                                        color: Color(0xFFDB3838)),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                ),
+                                onChanged: (val) =>
+                                    settingsNotifier.setImageGenApiKey(val),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              height: 48,
+                              child: FilledButton.icon(
+                                onPressed: () {
+                                  FocusScope.of(context).unfocus();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'کلید تصویرسازی ذخیره شد.',
+                                        style: GoogleFonts.vazirmatn(),
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.check),
+                                label: const Text('ذخیره'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: const Color(0xFFDB3838),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 32),
                 ],
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 

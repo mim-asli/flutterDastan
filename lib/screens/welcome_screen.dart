@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:myapp/main.dart';
+
 import 'package:myapp/screens/settings_screen.dart';
 import 'package:myapp/screens/new_game_wizard.dart';
+import 'package:myapp/screens/save_load_screen.dart'; // Import extracted SaveLoadContent
 import 'package:myapp/widgets/help_dialog.dart';
 import 'package:myapp/widgets/tts_settings_dialog.dart';
 
@@ -93,7 +94,7 @@ class WelcomeScreen extends ConsumerWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => const Scaffold(
-                                body: SaveLoadScreen(),
+                                body: SaveLoadContent(),
                               ),
                             ),
                           );

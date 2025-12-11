@@ -87,11 +87,21 @@ class GameResponse {
   final String storyText;
   final List<String> options;
   final Map<String, dynamic>? statusUpdates;
+  final List<String>? newSkills;
+  final List<String>? newMissions;
+  final List<String>? completedMissions;
+  final List<Map<String, dynamic>>? sceneEntities;
+  final List<Map<String, dynamic>>? mapUpdates;
 
   GameResponse({
     required this.storyText,
     required this.options,
     this.statusUpdates,
+    this.newSkills,
+    this.newMissions,
+    this.completedMissions,
+    this.sceneEntities,
+    this.mapUpdates,
   });
 
   /// متد Factory برای ساختن نمونه از روی یک نقشه (Map) JSON.
@@ -101,6 +111,21 @@ class GameResponse {
       storyText: json['story_text'] ?? 'داستان یافت نشد.',
       options: List<String>.from(json['options'] ?? []),
       statusUpdates: json['status_updates'] as Map<String, dynamic>?,
+      newSkills: json['new_skills'] != null
+          ? List<String>.from(json['new_skills'])
+          : null,
+      newMissions: json['new_missions'] != null
+          ? List<String>.from(json['new_missions'])
+          : null,
+      completedMissions: json['completed_missions'] != null
+          ? List<String>.from(json['completed_missions'])
+          : null,
+      sceneEntities: json['scene_entities'] != null
+          ? List<Map<String, dynamic>>.from(json['scene_entities'])
+          : null,
+      mapUpdates: json['map_updates'] != null
+          ? List<Map<String, dynamic>>.from(json['map_updates'])
+          : null,
     );
   }
 }

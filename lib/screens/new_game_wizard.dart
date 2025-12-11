@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/data/game_data.dart';
 import 'package:myapp/models.dart';
 import 'package:myapp/providers.dart';
-import 'package:myapp/main.dart';
+import 'package:myapp/screens/game_screen.dart';
 
 final newGameWizardProvider =
     StateNotifierProvider<NewGameWizardNotifier, WizardState>((ref) {
@@ -175,7 +175,7 @@ class _NewGameWizardState extends ConsumerState<NewGameWizard> {
                             // رفتن به صفحه اصلی بازی و حذف تمام صفحات قبلی (مثل ویزارد و ولکام)
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
-                                builder: (context) => const MainScreen(),
+                                builder: (context) => const GameScreen(),
                               ),
                               (route) => false,
                             );

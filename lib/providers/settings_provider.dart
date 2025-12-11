@@ -15,15 +15,19 @@ class SettingsProvider extends StateNotifier<AsyncValue<void>> {
   // مقادیر پیش‌فرض برای تنظیمات
   AiProviderType _aiProviderType = AiProviderType.cloud;
   String _localApiUrl = 'http://10.0.2.2:1234/v1';
+  String _localModelName = 'gemma-2-9b-it'; // نام مدل محلی پیش‌فرض
   String _cloudApiKey = 'gen-lang-client-0157950363';
   bool _isImageGenerationEnabled = false;
   bool _isDeepSeekEnabled = false;
   String _themeMode = 'dark'; // 'dark', 'light', 'system'
+  String _imageGenApiKey = ''; // کلید API برای تولید تصویر (OpenAI)
 
   // Getters
   AiProviderType get aiProviderType => _aiProviderType;
   String get localApiUrl => _localApiUrl;
+  String get localModelName => _localModelName;
   String get cloudApiKey => _cloudApiKey;
+  String get imageGenApiKey => _imageGenApiKey;
   bool get isImageGenerationEnabled => _isImageGenerationEnabled;
   bool get isDeepSeekEnabled => _isDeepSeekEnabled;
   String get themeMode => _themeMode;
@@ -38,9 +42,11 @@ class SettingsProvider extends StateNotifier<AsyncValue<void>> {
       final providerIndex = _prefs.getInt('aiProviderType') ?? 1;
       _aiProviderType = AiProviderType.values[providerIndex];
       _localApiUrl = _prefs.getString('localApiUrl') ?? _localApiUrl;
+      _localModelName = _prefs.getString('localModelName') ?? _localModelName;
       _cloudApiKey = _prefs.getString('cloudApiKey') ?? _cloudApiKey;
       _isImageGenerationEnabled =
           _prefs.getBool('isImageGenerationEnabled') ?? false;
+      _imageGenApiKey = _prefs.getString('imageGenApiKey') ?? '';
       _isDeepSeekEnabled = _prefs.getBool('isDeepSeekEnabled') ?? false;
       _themeMode = _prefs.getString('themeMode') ?? 'dark';
       _fontFamily = _prefs.getString('fontFamily') ?? 'Vazirmatn';
@@ -63,9 +69,21 @@ class SettingsProvider extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.data(null);
   }
 
+  Future<void> setLocalModelName(String name) async {
+    _localModelName = name;
+    await _prefs.setString('localModelName', name);
+    state = const AsyncValue.data(null);
+  }
+
   Future<void> setCloudApiKey(String key) async {
     _cloudApiKey = key;
     await _prefs.setString('cloudApiKey', key);
+    state = const AsyncValue.data(null);
+  }
+
+  Future<void> setImageGenApiKey(String key) async {
+    _imageGenApiKey = key;
+    await _prefs.setString('imageGenApiKey', key);
     state = const AsyncValue.data(null);
   }
 

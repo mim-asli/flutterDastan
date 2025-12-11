@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:myapp/models.dart';
 import 'package:myapp/services/base_ai_service.dart';
+import 'package:http/http.dart' as http;
 
 /// این کلاس، پیاده‌سازی "ابری" سرویس هوش مصنوعی است.
 ///
@@ -13,8 +14,9 @@ class CloudAIService implements BaseAIService {
   late final GenerativeModel _model; // مدل اصلی هوش مصنوعی برای تولید داستان
   late ChatSession _chat; // جلسه چت برای نگهداری تاریخچه مکالمه
   final String _apiKey; // کلید API برای احراز هویت
+  final String _imageGenApiKey; // کلید API برای تولید تصویر
 
-  CloudAIService(this._apiKey) {
+  CloudAIService(this._apiKey, this._imageGenApiKey) {
     _model = GenerativeModel(
       model: 'gemini-1.5-flash', // استفاده از مدل بهینه و سریع Gemini 1.5 Flash
       apiKey: _apiKey,
@@ -264,17 +266,47 @@ class CloudAIService implements BaseAIService {
 
   @override
   Future<String?> generateImage(String prompt) async {
-    // TODO: Implement actual image generation API call (e.g., OpenAI DALL-E, Stability AI)
-    // For now, we return a placeholder image URL based on the prompt keywords or a random fantasy image.
-    // Since we don't have a real image gen API key configured yet, this is a simulation.
+    if (_imageGenApiKey.isEmpty) {
+      developer.log('Image Generation API Key is missing.',
+          name: 'CloudAIService');
+      return null;
+    }
 
-    developer.log('Generating image for prompt: $prompt',
-        name: 'CloudAIService');
+    try {
+      developer.log('Generating image for prompt: $prompt',
+          name: 'CloudAIService');
 
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
+      final response = await http.post(
+        Uri.parse('https://api.openai.com/v1/images/generations'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_imageGenApiKey',
+        },
+        body: jsonEncode({
+          "model": "dall-e-3",
+          "prompt":
+              "A high quality, dramatic, fantasy style digital painting of: $prompt",
+          "n": 1,
+          "size": "1024x1024",
+          "response_format": "url",
+        }),
+      );
 
-    // Return a high-quality fantasy placeholder image
-    return 'https://picsum.photos/seed/${prompt.hashCode}/800/600';
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final imageUrl = data['data'][0]['url'];
+        developer.log('Image generated successfully: $imageUrl',
+            name: 'CloudAIService');
+        return imageUrl;
+      } else {
+        developer.log(
+            'Error generating image: ${response.statusCode} - ${response.body}',
+            name: 'CloudAIService');
+        return null;
+      }
+    } catch (e) {
+      developer.log('Exception generating image: $e', name: 'CloudAIService');
+      return null;
+    }
   }
 }
